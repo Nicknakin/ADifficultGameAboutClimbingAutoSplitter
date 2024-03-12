@@ -30,7 +30,7 @@ jobs:
         if: github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v1
         with:
-          files: target/wasm32-unknown-unknown/release/a_dangerous_game_about_climbing.wasm
+          files: target/wasm32-unknown-unknown/release/a_difficult_game_about_climbing.wasm
           name: Latest
           tag_name: latest
           body: This contains the latest version of the auto splitter.

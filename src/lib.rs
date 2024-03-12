@@ -56,13 +56,15 @@ struct State {
     right_hand_grabbed_surface: u64,
     position_x: f32,
     position_y: f32,
+    input_listening: u8,
     zone: Zone,
 }
 
 impl State {
     fn update(&mut self, process: &Process, base_address: Address) {
         const LEFT_HAND_GRABBED_SURFACE_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA98];
-        const RIGHT_HAND_GRABBED_SURFACE_PATH: &[u64] = &[0x7280F8, 0xA0, 0xBD8];
+        const RIGHT_HAND_GRABBED_SURFACE_PATH: &[u64] = &[0x7280F8, 0xA0, 0xAF4];
+        const INPUT_LISTENING_PATH: &[u64] = &[0x7280F8, 0xA0, 0xBD8];
         const POSITION_X_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA88, 0x30, 0x10, 0xE0];
         const POSITION_Y_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA88, 0x30, 0x10, 0xE4];
 
@@ -82,6 +84,10 @@ impl State {
             )
             .unwrap_or(0);
 
+        self.input_listening = process
+            .read_pointer_path(base_address, asr::PointerSize::Bit64, INPUT_LISTENING_PATH)
+            .unwrap_or(0);
+
         self.position_x = process
             .read_pointer_path(base_address, asr::PointerSize::Bit64, POSITION_X_PATH)
             .unwrap_or(f32::NAN);
@@ -93,7 +99,8 @@ impl State {
 
     fn log(&self) {
         asr::print_limited::<1024>(&format_args!(
-            "({:.2?}, {:.2?}) - ({:x?}, {:x?}) - Zone:  {:?}",
+            "{:?} - ({:.2?}, {:.2?}) - ({:x?}, {:x?}) - Zone:  {:?}",
+            self.input_listening,
             self.position_x,
             self.position_y,
             self.left_hand_grabbed_surface,
@@ -125,6 +132,10 @@ impl State {
             self.zone = self.zone.split();
         }
         should_split
+    }
+
+    fn should_reset(&self, old_state: &State) -> bool {
+        old_state.input_listening == 0 && self.input_listening == 1
     }
 }
 
@@ -178,8 +189,18 @@ async fn main() {
                                 "Splitting! {:?}",
                                 current_state.zone.to_string()
                             ))
-                        };
+                        }
                         asr::timer::split();
+                    }
+
+                    if *timer_state != TimerState::NotRunning
+                        && current_state.should_reset(&old_state)
+                    {
+                        if cfg!(debug_assertions) {
+                            asr::print_message("Reseting Run");
+                        }
+
+                        asr::timer::reset();
                     }
 
                     next_tick().await;
