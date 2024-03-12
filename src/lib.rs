@@ -63,8 +63,8 @@ struct State {
 impl State {
     fn update(&mut self, process: &Process, base_address: Address) {
         const LEFT_HAND_GRABBED_SURFACE_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA98];
-        const RIGHT_HAND_GRABBED_SURFACE_PATH: &[u64] = &[0x7280F8, 0xA0, 0xAF4];
-        const INPUT_LISTENING_PATH: &[u64] = &[0x7280F8, 0xA0, 0xBD8];
+        const RIGHT_HAND_GRABBED_SURFACE_PATH: &[u64] = &[0x7280F8, 0xA0, 0xBD8];
+        const INPUT_LISTENING_PATH: &[u64] = &[0x7280F8, 0xA0, 0xAF4];
         const POSITION_X_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA88, 0x30, 0x10, 0xE0];
         const POSITION_Y_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA88, 0x30, 0x10, 0xE4];
 
@@ -146,8 +146,9 @@ async fn main() {
             .until_closes(async {
                 asr::print_message("Intializing References...");
                 // Load initial locations for libraries from process
-                let mono_address: Address =
-                    process.get_module_address("mono-2.0-bdwgc.dll").unwrap();
+                let Ok(mono_address) = process.get_module_address("mono-2.0-bdwgc.dll") else {
+                    return;
+                };
 
                 if cfg!(debug_assertions) {
                     asr::print_limited::<18>(&format_args!("0x{:x?}", mono_address));
