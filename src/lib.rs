@@ -127,9 +127,8 @@ async fn main() {
                     return;
                 };
 
-                if cfg!(debug_assertions) {
-                    asr::print_limited::<18>(&format_args!("0x{:x?}", mono_address));
-                }
+                #[cfg(debug_assertions)]
+                asr::print_limited::<18>(&format_args!("0x{:x?}", mono_address));
 
                 let mut current_state = State::default();
 
@@ -138,9 +137,8 @@ async fn main() {
                     let timer_state = &asr::timer::state();
                     let old_state = current_state.clone();
                     current_state.update(&process, mono_address);
-                    if cfg!(debug_assertions) {
-                        current_state.log();
-                    }
+                    #[cfg(debug_assertions)]
+                    current_state.log();
 
                     let unstarted_states = [
                         TimerState::NotRunning,
@@ -151,9 +149,8 @@ async fn main() {
                     if unstarted_states.contains(timer_state)
                         && current_state.should_start(&old_state)
                     {
-                        if cfg!(debug_assertions) {
-                            asr::print_message("Starting run!");
-                        }
+                        #[cfg(debug_assertions)]
+                        asr::print_message("Starting run!");
                         asr::timer::start();
                     }
 
@@ -170,9 +167,8 @@ async fn main() {
                     if *timer_state != TimerState::NotRunning
                         && current_state.should_reset(&old_state)
                     {
-                        if cfg!(debug_assertions) {
-                            asr::print_message("Reseting Run");
-                        }
+                        #[cfg(debug_assertions)]
+                        asr::print_message("Reseting Run");
 
                         current_state.zone = 0;
                         asr::timer::reset();
