@@ -72,39 +72,48 @@ impl State {
     }
 
     fn should_split(&mut self) -> bool {
-        if (self.zone & 1) == 0 && self.position_y > 31f32 {
-            self.zone = self.zone | 1;
+        const MOUNTAIN: u8 = 0b00000001;
+        const JUNGLE: u8 = 0b00000010;
+        const FACTORY: u8 = 0b00000100;
+        const POOL: u8 = 0b00001000;
+        const CONSTRUCTION: u8 = 0b00010000;
+        const CAVE: u8 = 0b00100000;
+        const ICE: u8 = 0b01000000;
+        const CREDITS: u8 = 0b10000000;
+        if (self.zone & MOUNTAIN == 0) && self.position_y > 31f32 {
+            self.zone = self.zone | MOUNTAIN;
             return true;
         }
-        if (self.zone & 2) == 0 && self.position_y > 55f32 && self.position_x < 0f32 {
-            self.zone = self.zone | 2;
+        if (self.zone & JUNGLE == 0) && self.position_y > 55f32 && self.position_x < 0f32 {
+            self.zone = self.zone | JUNGLE;
             return true;
         }
-        if (self.zone & 4) == 0
+        if (self.zone & FACTORY == 0)
             && self.position_y > 80f32
             && self.position_y < 87f32
             && self.position_x > 8f32
         {
-            self.zone = self.zone | 4;
+            self.zone = self.zone | FACTORY;
             return true;
         }
-        if (self.zone & 8) == 0 && self.position_y > 109f32 && self.position_x < 20f32 {
+        if (self.zone & POOL == 0) && self.position_y > 109f32 && self.position_x < 20f32 {
+            self.zone = self.zone | POOL;
             return true;
         }
-        if (self.zone & 16) == 0 && self.position_y > 135f32 {
-            self.zone = self.zone | 16;
+        if (self.zone & CONSTRUCTION == 0) && self.position_y > 135f32 {
+            self.zone = self.zone | CONSTRUCTION;
             return true;
         }
-        if (self.zone & 32) == 0 && self.position_y > 152f32 {
-            self.zone = self.zone | 32;
+        if (self.zone & CAVE == 0) && self.position_y > 152f32 {
+            self.zone = self.zone | CAVE;
             return true;
         }
-        if (self.zone & 64) == 0 && self.position_y > 204f32 && self.position_x < 47f32 {
-            self.zone = self.zone | 64;
+        if (self.zone & ICE == 0) && self.position_y > 204f32 && self.position_x < 47f32 {
+            self.zone = self.zone | ICE;
             return true;
         }
-        if (self.zone & 128) == 0 && self.position_y > 245f32 {
-            self.zone = self.zone | 128;
+        if (self.zone & CREDITS == 0) && self.position_y > 245f32 {
+            self.zone = self.zone | CREDITS;
             return true;
         }
 
