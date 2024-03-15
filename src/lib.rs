@@ -135,7 +135,7 @@ impl State {
     }
 
     fn should_reset(&self, old_state: &State) -> bool {
-        old_state.input_listening == 0 && self.input_listening == 1
+        old_state.input_listening != 0 && self.input_listening == 0
     }
 }
 
@@ -176,10 +176,6 @@ async fn main() {
                     {
                         if cfg!(debug_assertions) {
                             asr::print_message("Starting run!");
-                        }
-                        current_state.zone = Zone::Mountain;
-                        if *timer_state == TimerState::Ended {
-                            asr::timer::reset();
                         }
                         asr::timer::start();
                     }
