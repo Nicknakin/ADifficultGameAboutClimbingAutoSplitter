@@ -121,7 +121,7 @@ impl State {
     }
 
     fn should_reset(&self, old_state: &State) -> bool {
-        old_state.input_listening != 0 && self.input_listening == 0
+        (old_state.input_listening & 1) != 1 && (self.input_listening & 1) == 0
     }
 }
 
