@@ -204,6 +204,5 @@ async fn main() {
                 }
             })
             .await;
-        asr::timer::reset();
     }
 }
