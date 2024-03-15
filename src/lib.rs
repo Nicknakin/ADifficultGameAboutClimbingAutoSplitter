@@ -197,6 +197,7 @@ async fn main() {
                             asr::print_message("Reseting Run");
                         }
 
+                        current_state.zone = Zone::Mountain;
                         asr::timer::reset();
                     }
 
