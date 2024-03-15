@@ -6,50 +6,6 @@ use asr::{future::next_tick, Address, Process};
 asr::async_main!(stable);
 asr::panic_handler!();
 
-#[derive(Clone)]
-enum Zone {
-    Mountain,
-    Jungle,
-    Gears,
-    Pool,
-    Construction,
-    Cave,
-    Ice,
-    Credits,
-}
-impl Default for Zone {
-    fn default() -> Self {
-        Zone::Mountain
-    }
-}
-
-impl Zone {
-    fn split(&self) -> Zone {
-        match &self {
-            Zone::Mountain => Zone::Jungle,
-            Zone::Jungle => Zone::Gears,
-            Zone::Gears => Zone::Pool,
-            Zone::Pool => Zone::Construction,
-            Zone::Construction => Zone::Cave,
-            Zone::Cave => Zone::Ice,
-            Zone::Ice => Zone::Credits,
-            Zone::Credits => Zone::Mountain,
-        }
-    }
-    fn to_string(&self) -> &str {
-        match &self {
-            Zone::Mountain => "Mountain",
-            Zone::Jungle => "Jungle",
-            Zone::Gears => "Gears",
-            Zone::Pool => "Pool",
-            Zone::Construction => "Construction",
-            Zone::Cave => "Cave",
-            Zone::Ice => "Ice",
-            Zone::Credits => "Credits",
-        }
-    }
-}
-
 #[derive(Default, Clone)]
 struct State {
     left_hand_grabbed_surface: u64,
@@ -57,7 +13,7 @@ struct State {
     position_x: f32,
     position_y: f32,
     input_listening: u8,
-    zone: Zone,
+    zone: u8,
 }
 
 impl State {
@@ -105,7 +61,7 @@ impl State {
             self.position_y,
             self.left_hand_grabbed_surface,
             self.right_hand_grabbed_surface,
-            self.zone.to_string(),
+            self.zone,
         ));
     }
 
@@ -116,22 +72,43 @@ impl State {
     }
 
     fn should_split(&mut self) -> bool {
-        let should_split = match self.zone {
-            Zone::Mountain => self.position_y > 31f32,
-            Zone::Jungle => self.position_y > 55f32 && self.position_x < 0f32,
-            Zone::Gears => {
-                self.position_y > 80f32 && self.position_y < 87f32 && self.position_x > 8f32
-            }
-            Zone::Pool => self.position_y > 109f32 && self.position_x < 20f32,
-            Zone::Construction => self.position_y > 135f32,
-            Zone::Cave => self.position_y > 152f32,
-            Zone::Ice => self.position_y > 204f32 && self.position_x < 47f32,
-            Zone::Credits => self.position_y > 245f32,
-        };
-        if should_split {
-            self.zone = self.zone.split();
+        if (self.zone & 1) == 0 && self.position_y > 31f32 {
+            self.zone = self.zone | 1;
+            return true;
         }
-        should_split
+        if (self.zone & 2) == 0 && self.position_y > 55f32 && self.position_x < 0f32 {
+            self.zone = self.zone | 2;
+            return true;
+        }
+        if (self.zone & 4) == 0
+            && self.position_y > 80f32
+            && self.position_y < 87f32
+            && self.position_x > 8f32
+        {
+            self.zone = self.zone | 4;
+            return true;
+        }
+        if (self.zone & 8) == 0 && self.position_y > 109f32 && self.position_x < 20f32 {
+            return true;
+        }
+        if (self.zone & 16) == 0 && self.position_y > 135f32 {
+            self.zone = self.zone | 16;
+            return true;
+        }
+        if (self.zone & 32) == 0 && self.position_y > 152f32 {
+            self.zone = self.zone | 32;
+            return true;
+        }
+        if (self.zone & 64) == 0 && self.position_y > 204f32 && self.position_x < 47f32 {
+            self.zone = self.zone | 64;
+            return true;
+        }
+        if (self.zone & 128) == 0 && self.position_y > 245f32 {
+            self.zone = self.zone | 128;
+            return true;
+        }
+
+        return false;
     }
 
     fn should_reset(&self, old_state: &State) -> bool {
@@ -184,7 +161,7 @@ async fn main() {
                         if cfg!(debug_assertions) {
                             asr::print_limited::<1024>(&format_args!(
                                 "Splitting! {:?}",
-                                current_state.zone.to_string()
+                                current_state.zone
                             ))
                         }
                         asr::timer::split();
@@ -197,7 +174,7 @@ async fn main() {
                             asr::print_message("Reseting Run");
                         }
 
-                        current_state.zone = Zone::Mountain;
+                        current_state.zone = 0;
                         asr::timer::reset();
                     }
 
