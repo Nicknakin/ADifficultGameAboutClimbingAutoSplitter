@@ -17,40 +17,51 @@ struct State {
 }
 
 impl State {
-    fn update(&mut self, process: &Process, base_address: Address) {
+    fn generate(process: &Process, base_address: Address, zone: u8) -> Result<State, asr::Error> {
         const LEFT_HAND_GRABBED_SURFACE_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA98];
         const RIGHT_HAND_GRABBED_SURFACE_PATH: &[u64] = &[0x7280F8, 0xA0, 0xBD8];
         const INPUT_LISTENING_PATH: &[u64] = &[0x7280F8, 0xA0, 0xAF4];
         const POSITION_X_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA88, 0x30, 0x10, 0xE0];
         const POSITION_Y_PATH: &[u64] = &[0x7280F8, 0xA0, 0xA88, 0x30, 0x10, 0xE4];
 
-        self.left_hand_grabbed_surface = process
-            .read_pointer_path::<u64>(
-                base_address,
-                asr::PointerSize::Bit64,
-                LEFT_HAND_GRABBED_SURFACE_PATH,
-            )
-            .unwrap_or(0);
+        let left_hand_grabbed_surface = process.read_pointer_path::<u64>(
+            base_address,
+            asr::PointerSize::Bit64,
+            LEFT_HAND_GRABBED_SURFACE_PATH,
+        )?;
 
-        self.right_hand_grabbed_surface = process
-            .read_pointer_path(
-                base_address,
-                asr::PointerSize::Bit64,
-                RIGHT_HAND_GRABBED_SURFACE_PATH,
-            )
-            .unwrap_or(0);
+        let right_hand_grabbed_surface = process.read_pointer_path::<u64>(
+            base_address,
+            asr::PointerSize::Bit64,
+            RIGHT_HAND_GRABBED_SURFACE_PATH,
+        )?;
 
-        self.input_listening = process
-            .read_pointer_path(base_address, asr::PointerSize::Bit64, INPUT_LISTENING_PATH)
-            .unwrap_or(0);
+        let input_listening = process.read_pointer_path::<u8>(
+            base_address,
+            asr::PointerSize::Bit64,
+            INPUT_LISTENING_PATH,
+        )?;
 
-        self.position_x = process
-            .read_pointer_path(base_address, asr::PointerSize::Bit64, POSITION_X_PATH)
-            .unwrap_or(f32::NAN);
+        let position_x = process.read_pointer_path::<f32>(
+            base_address,
+            asr::PointerSize::Bit64,
+            POSITION_X_PATH,
+        )?;
 
-        self.position_y = process
-            .read_pointer_path(base_address, asr::PointerSize::Bit64, POSITION_Y_PATH)
-            .unwrap_or(f32::NAN);
+        let position_y = process.read_pointer_path::<f32>(
+            base_address,
+            asr::PointerSize::Bit64,
+            POSITION_Y_PATH,
+        )?;
+
+        return Ok(State {
+            left_hand_grabbed_surface,
+            right_hand_grabbed_surface,
+            position_x,
+            position_y,
+            input_listening,
+            zone,
+        });
     }
 
     fn log(&self) {
@@ -145,7 +156,14 @@ async fn main() {
                     //Load each of the relevant values from memory in to variables
                     let timer_state = &asr::timer::state();
                     let old_state = current_state.clone();
-                    current_state.update(&process, mono_address);
+                    current_state =
+                        match State::generate(&process, mono_address, current_state.zone) {
+                            Ok(state) => state,
+                            Err(_) => {
+                                continue;
+                            }
+                        };
+
                     #[cfg(debug_assertions)]
                     current_state.log();
 
@@ -181,6 +199,10 @@ async fn main() {
 
                         current_state.zone = 0;
                         asr::timer::reset();
+                    }
+
+                    if *timer_state == TimerState::NotRunning {
+                        current_state.zone = 0;
                     }
 
                     next_tick().await;
