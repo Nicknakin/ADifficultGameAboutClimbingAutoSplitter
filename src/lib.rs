@@ -138,7 +138,7 @@ impl State {
 
 async fn main() {
     loop {
-        let process = Process::wait_attach("A Difficult Gam").await;
+        let process = Process::wait_attach("A Difficult Game About Climbing.exe").await;
         process
             .until_closes(async {
                 asr::print_message("Intializing References...");
