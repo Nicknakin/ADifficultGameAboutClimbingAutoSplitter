@@ -1,11 +1,33 @@
 #![no_std]
 
 use asr::deep_pointer::DeepPointer;
+use asr::settings::gui::{Gui, Title};
 use asr::timer::TimerState;
 use asr::{future::next_tick, Address, Process};
 
 asr::async_main!(stable);
 asr::panic_handler!();
+
+#[derive(Gui)]
+struct Settings {
+    _general_settings: Title,
+    #[default = true]
+    toggle_mountain: bool,
+    #[default = true]
+    toggle_jungle: bool,
+    #[default = true]
+    toggle_gears: bool,
+    #[default = true]
+    toggle_pool: bool,
+    #[default = true]
+    toggle_construction: bool,
+    #[default = true]
+    toggle_cave: bool,
+    #[default = true]
+    toggle_ice: bool,
+    #[default = true]
+    toggle_credits: bool,
+}
 
 #[derive(Default, Clone)]
 struct State {
@@ -101,49 +123,65 @@ impl State {
             && (self.position_y < 2f32)
     }
 
-    fn should_split(&mut self) -> bool {
+    fn should_split(&mut self, settings: &Settings) -> bool {
         const MOUNTAIN: u8 = 1;
         const JUNGLE: u8 = 1 << 1;
-        const FACTORY: u8 = 1 << 2;
+        const GEARS: u8 = 1 << 2;
         const POOL: u8 = 1 << 3;
         const CONSTRUCTION: u8 = 1 << 4;
         const CAVE: u8 = 1 << 5;
         const ICE: u8 = 1 << 6;
         const CREDITS: u8 = 1 << 7;
 
-        if (self.zone & MOUNTAIN == 0) && self.position_y > 31f32 {
+        if settings.toggle_mountain && (self.zone & MOUNTAIN == 0) && self.position_y > 31f32 {
             self.zone |= MOUNTAIN;
             return true;
         }
-        if (self.zone & JUNGLE == 0) && self.position_y > 55f32 && self.position_x < 0f32 {
+        if settings.toggle_jungle
+            && (self.zone & JUNGLE == 0)
+            && self.position_y > 55f32
+            && self.position_x < 0f32
+        {
             self.zone |= JUNGLE;
             return true;
         }
-        if (self.zone & FACTORY == 0)
+        if settings.toggle_gears
+            && (self.zone & GEARS == 0)
             && self.position_y > 80f32
             && self.position_y < 87f32
             && self.position_x > 8f32
         {
-            self.zone |= FACTORY;
+            self.zone |= GEARS;
             return true;
         }
-        if (self.zone & POOL == 0) && self.position_y > 109f32 && self.position_x < 20f32 {
+        if settings.toggle_pool
+            && (self.zone & POOL == 0)
+            && self.position_y > 109f32
+            && self.position_x < 20f32
+        {
             self.zone |= POOL;
             return true;
         }
-        if (self.zone & CONSTRUCTION == 0) && self.position_y > 135f32 {
+        if settings.toggle_construction
+            && (self.zone & CONSTRUCTION == 0)
+            && self.position_y > 135f32
+        {
             self.zone |= CONSTRUCTION;
             return true;
         }
-        if (self.zone & CAVE == 0) && self.position_y > 152f32 {
+        if settings.toggle_cave && (self.zone & CAVE == 0) && self.position_y > 152f32 {
             self.zone |= CAVE;
             return true;
         }
-        if (self.zone & ICE == 0) && self.position_y > 204f32 && self.position_x < 47f32 {
+        if settings.toggle_ice
+            && (self.zone & ICE == 0)
+            && self.position_y > 204f32
+            && self.position_x < 47f32
+        {
             self.zone |= ICE;
             return true;
         }
-        if (self.zone & CREDITS == 0) && self.position_y > 247f32 {
+        if settings.toggle_credits && (self.zone & CREDITS == 0) && self.position_y > 247f32 {
             self.zone |= CREDITS;
             return true;
         }
@@ -364,7 +402,10 @@ fn identify_valid_position_object(process: &Process) -> Result<Option<Address>, 
 }
 
 async fn main() {
+    let mut settings = Settings::register();
+
     loop {
+        settings.update();
         //Attempt to attach to process with the following name
         let process = Process::wait_attach("A Difficult Game About Climbing.exe").await;
         process
@@ -407,7 +448,8 @@ async fn main() {
                     }
 
                     //Logic to trigger splits
-                    if *timer_state == TimerState::Running && current_state.should_split() {
+                    if *timer_state == TimerState::Running && current_state.should_split(&settings)
+                    {
                         #[cfg(debug_assertions)]
                         asr::print_limited::<1024>(&format_args!(
                             "Splitting! {:?}",
