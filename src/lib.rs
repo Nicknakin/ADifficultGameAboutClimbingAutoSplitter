@@ -75,13 +75,13 @@ impl State {
             )
             .unwrap_or(0);
 
-        return Ok(Some(State {
+        Ok(Some(State {
             left_hand_grabbed_surface,
             right_hand_grabbed_surface,
             position_x,
             position_y,
             zone,
-        }));
+        }))
     }
 
     fn log(&self) {
@@ -112,11 +112,11 @@ impl State {
         const CREDITS: u8 = 1 << 7;
 
         if (self.zone & MOUNTAIN == 0) && self.position_y > 31f32 {
-            self.zone = self.zone | MOUNTAIN;
+            self.zone |= MOUNTAIN;
             return true;
         }
         if (self.zone & JUNGLE == 0) && self.position_y > 55f32 && self.position_x < 0f32 {
-            self.zone = self.zone | JUNGLE;
+            self.zone |= JUNGLE;
             return true;
         }
         if (self.zone & FACTORY == 0)
@@ -124,31 +124,31 @@ impl State {
             && self.position_y < 87f32
             && self.position_x > 8f32
         {
-            self.zone = self.zone | FACTORY;
+            self.zone |= FACTORY;
             return true;
         }
         if (self.zone & POOL == 0) && self.position_y > 109f32 && self.position_x < 20f32 {
-            self.zone = self.zone | POOL;
+            self.zone |= POOL;
             return true;
         }
         if (self.zone & CONSTRUCTION == 0) && self.position_y > 135f32 {
-            self.zone = self.zone | CONSTRUCTION;
+            self.zone |= CONSTRUCTION;
             return true;
         }
         if (self.zone & CAVE == 0) && self.position_y > 152f32 {
-            self.zone = self.zone | CAVE;
+            self.zone |= CAVE;
             return true;
         }
         if (self.zone & ICE == 0) && self.position_y > 204f32 && self.position_x < 47f32 {
-            self.zone = self.zone | ICE;
+            self.zone |= ICE;
             return true;
         }
         if (self.zone & CREDITS == 0) && self.position_y > 247f32 {
-            self.zone = self.zone | CREDITS;
+            self.zone |= CREDITS;
             return true;
         }
 
-        return false;
+        false
     }
 
     fn should_reset(&self) -> bool {
@@ -251,7 +251,7 @@ fn identify_valid_anim_controller(process: &Process) -> Result<Option<Address>, 
 
     #[cfg(debug_assertions)]
     asr::print_message("Failed To Find Animation Controller");
-    return Ok(None);
+    Ok(None)
 }
 
 fn identify_valid_position_object(process: &Process) -> Result<Option<Address>, asr::Error> {
@@ -360,7 +360,7 @@ fn identify_valid_position_object(process: &Process) -> Result<Option<Address>, 
 
     #[cfg(debug_assertions)]
     asr::print_message("Failed To Find Position Object");
-    return Ok(None);
+    Ok(None)
 }
 
 async fn main() {
